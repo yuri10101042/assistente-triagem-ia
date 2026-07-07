@@ -20,10 +20,10 @@ O sistema opera em um fluxo de três etapas principais:
 ## 📸 Demonstração
 
 **Arquitetura do Fluxo:**
-![Arquitetura do Fluxo no n8n](preview-arquitetura.png)
+![Arquitetura do Fluxo no n8n](preview-arquitetura.jpeg)
 
 **Resultado do Atendimento:**
-![Chat da IA funcionando](preview-chat.png)
+![Chat da IA funcionando](preview-chat.jpeg)
 
 ## 🚀 Como Rodar Localmente
 
