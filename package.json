@@ -1,0 +1,13 @@
+{
+  "name": "assistente-triagem-clinicas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PoC de assistente virtual para triagem em clinicas (n8n + OpenAI)",
+  "scripts": {
+    "dev": "n8n start",
+    "start": "n8n start"
+  },
+  "dependencies": {
+    "n8n": "^2.31.4"
+  }
+}
