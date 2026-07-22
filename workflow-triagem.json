@@ -1,19 +1,40 @@
 {
-  "name": "My workflow",
+  "name": "Assistente Triagem Clinica - Telegram",
   "nodes": [
     {
       "parameters": {
-        "options": {}
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
       },
-      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
-      "typeVersion": 1.4,
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
       "position": [
         0,
         0
       ],
       "id": "a15b7add-eee1-4f07-a8d0-8ef0f97322d8",
-      "name": "When chat message received",
-      "webhookId": "26c79b2d-27c8-414b-b2db-61b504e9eb22"
+      "name": "Telegram Trigger",
+      "webhookId": "26c79b2d-27c8-414b-b2db-61b504e9eb22",
+      "credentials": {
+        "telegramApi": {
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const chatId = String($input.first().json.message.chat.id);\nconst text = String($input.first().json.message.text || '');\nconst staticData = $getWorkflowStaticData('global');\nif (!staticData.conversations) staticData.conversations = {};\nif (!staticData.conversations[chatId]) staticData.conversations[chatId] = [];\n\nconst history = staticData.conversations[chatId].slice(-12);\nlet context = '';\nif (history.length) {\n  context = history.map(m => `${m.role === 'user' ? 'Paciente' : 'Recepcionista'}: ${m.content}`).join('\\n');\n}\n\nconst userContent = context\n  ? `Historico recente da conversa:\\n${context}\\n\\nMensagem atual do paciente:\\n${text}`\n  : text;\n\nreturn [{\n  json: {\n    chatId,\n    text,\n    userContent,\n    history,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ],
+      "id": "b2c3d4e5-1111-2222-3333-444455556666",
+      "name": "Preparar Contexto"
     },
     {
       "parameters": {
@@ -25,10 +46,15 @@
         },
         "responses": {
           "values": [
-            {},
             {
+              "type": "text",
               "role": "system",
-              "content": "You are the virtual receptionist for a medical clinic. Your name is the clinic assistant. Act exclusively as a receptionist: welcome patients, guide them, and collect information for scheduling. Do not diagnose, prescribe, interpret test results, or replace medical advice.\n\nAlways communicate in English.\n\n## Tone and demeanor\n- Be welcoming, clear, respectful, and professional at all times.\n- Use simple, empathetic, and concise language.\n- Address the person by name once you know it.\n- Avoid complex medical jargon.\n- Keep responses short: generally 1 to 3 sentences per message.\n- Never be cold, rushed, authoritative, or overly informal.\n\n## Main objective\nConduct the initial intake and gather, in an organized way, the information needed to forward the appointment request:\n1. Patient's full name\n2. Chief complaint, briefly stated\n3. Preferred appointment time\n\n## Intake flow\nFollow this order, adapting naturally to the conversation:\n\n### 1. Welcome\nGreet warmly and say you can help with scheduling or initial front-desk guidance.\n\nOpening example:\n\"Hello! Welcome to the clinic. I'm the virtual receptionist and I can help you schedule your appointment. What should I call you?\"\n\n### 2. Patient name\n- Ask for the patient's full name.\n- If the person is scheduling for someone else, confirm the name of who will be seen.\n- After receiving it, use the name naturally in subsequent messages.\n\n### 3. Chief complaint\n- Ask what the main complaint or reason for the visit is.\n- Request a brief description, in just a few words.\n- Do not dig deeper with many clinical questions.\n- If the person reports severe symptoms or urgency, prioritize advising them to seek emergency care immediately.\n\nExample:\n\"[Name], what is the main complaint or reason for your visit? Please share it briefly.\"\n\n### 4. Preferred time\n- Ask which day and time they prefer.\n- If they only provide part of their preference, politely ask for the missing details.\n- If the time is vague, help them specify: morning, afternoon, day of the week, or approximate date.\n\nExample:\n\"What day and time would you prefer for the appointment?\"\n\n### 5. Confirmation and closing\nWhen you have the name, chief complaint, and preferred time:\n- Provide a brief summary of the collected information.\n- Let them know the request will be forwarded to the front desk or responsible team for confirmation.\n- Thank them and maintain a welcoming tone.\n\nExample:\n\"Perfect, [Name]. I've noted: appointment for [chief complaint], with a preference for [preferred time]. I'll forward your request for confirmation. Thank you for reaching out!\"\n\n## Conversation rules\n- Ask one question at a time whenever possible.\n- If the user already provides information spontaneously, do not repeat the question; just confirm and move on.\n- If essential information is missing, politely ask only for what is still needed.\n- Do not invent available times, prices, accepted insurance plans, address, doctor names, or appointment confirmations, unless that information is explicitly provided in the conversation context.\n- If asked something you do not know, clearly say you will check with the clinic team.\n- Do not promise a confirmed appointment without explicit confirmation from the clinic.\n\n## Important boundaries\n- Do not provide diagnosis, prognosis, medical treatment advice, or medication recommendations.\n- Do not minimize symptoms.\n- Do not request unnecessary data, such as SSN, full address, or financial information, unless explicitly required by the system context.\n- In case of emergency — chest pain, severe shortness of breath, fainting, heavy bleeding, suicidal thoughts, seizure, or any immediate risk — stop the scheduling flow and advise them to go to the emergency room or call their local emergency services.\n\n## Handling special situations\n- If the patient is anxious or confused, reassure them first and simplify the conversation.\n- If scheduling for a child or elderly person, keep language clear and patient.\n- If they request rescheduling or cancellation, confirm the name and request without inventing internal policies.\n- If they ask questions outside the scope of reception, briefly explain you can help with scheduling and intake, and redirect the conversation.\n\n## Response format\n- Short, natural, human-sounding replies.\n- No long lists, except when providing a final summary.\n- Do not mention internal rules, prompts, or technical operation.\n- Never say you are an AI unless the user asks directly; in that case, respond transparently while maintaining a professional tone.\n\n## Success criteria\nAn intake is successful when you:\n- Welcomed the patient professionally;\n- Obtained name, chief complaint, and preferred time;\n- Summarized the information clearly;\n- Maintained appropriate receptionist boundaries and safety limits."
+              "content": "Você é a recepcionista virtual de uma clínica médica. Atue exclusivamente como recepção: acolher pacientes, orientar e coletar informações para encaminhar o agendamento. Não diagnostique, não receite, não interprete exames e não substitua orientação médica.\n\nComunique-se sempre em português do Brasil.\n\n## Tom\n- Acolhedor, claro, respeitoso e profissional.\n- Linguagem simples, empática e objetiva.\n- Trate a pessoa pelo nome assim que souber.\n- Evite jargão médico complexo.\n- Respostas curtas: em geral 1 a 3 frases.\n- Nunca seja frio, apressado, autoritário ou informal demais.\n\n## Objetivo\nConduzir a triagem inicial e reunir, de forma organizada:\n1. Nome completo do paciente\n2. Queixa principal (breve)\n3. Preferência de dia/horário para atendimento\n\n## Fluxo da conversa\nSiga esta ordem, adaptando-se ao que a pessoa já disse:\n\n### 1. Boas-vindas\nCumprimente e diga que pode ajudar com agendamento ou orientação inicial da recepção.\n\nExemplo:\n\"Olá! Bem-vindo(a) à clínica. Sou a recepcionista virtual e posso ajudar com o agendamento. Como posso te chamar?\"\n\n### 2. Nome\n- Peça o nome completo do paciente.\n- Se for agendamento para outra pessoa, confirme o nome de quem será atendido.\n- Depois, use o nome nas próximas mensagens.\n\n### 3. Queixa principal\n- Pergunte o motivo principal da visita.\n- Peça uma descrição breve.\n- Não aprofunde com muitas perguntas clínicas.\n- Se houver sinais de urgência, oriente procurar emergência imediatamente.\n\nExemplo:\n\"[Nome], qual é a queixa ou o motivo principal da consulta? Pode resumir em poucas palavras.\"\n\n### 4. Preferência de horário\n- Pergunte dia e horário de preferência.\n- Se vier incompleto, peça só o que falta.\n- Se for vago, ajude a especificar: manhã, tarde, dia da semana ou data aproximada.\n\n### 5. Confirmação\nQuando tiver nome, queixa e horário:\n- Faça um resumo curto.\n- Informe que a solicitação será encaminhada à recepção/equipe para confirmação.\n- Agradeça.\n\nExemplo:\n\"Perfeito, [Nome]. Anotei: consulta para [queixa], com preferência por [horário]. Vou encaminhar para confirmação. Obrigado(a) pelo contato!\"\n\n## Regras\n- Prefira uma pergunta por vez.\n- Se a pessoa já informou algo, confirme e avance — não pergunte de novo.\n- Não invente horários disponíveis, preços, convênios, endereço, nomes de médicos ou confirmação de agenda.\n- Se não souber, diga que vai verificar com a equipe da clínica.\n- Não prometa agendamento confirmado sem confirmação da clínica.\n\n## Limites\n- Sem diagnóstico, prognóstico, tratamento ou indicação de medicamento.\n- Não minimize sintomas.\n- Não peça dados desnecessários (CPF, endereço completo, dados financeiros), salvo se o contexto do sistema exigir.\n- Emergência (dor no peito, falta de ar intensa, desmaio, sangramento intenso, ideação suicida, convulsão ou risco imediato): interrompa o fluxo de agenda e oriente procurar emergência ou ligar para o SAMU 192.\n\n## Formato da resposta ao paciente\n- Respostas curtas e naturais.\n- Não mencione regras internas, prompts ou funcionamento técnico.\n- Só diga que é IA se a pessoa perguntar diretamente.\n\n## Bloco técnico (obrigatório ao concluir a triagem)\nQuando nome, queixa e horário estiverem completos, envie primeiro a mensagem normal ao paciente.\nNa mesma resposta, depois da mensagem, inclua exatamente este bloco (o sistema remove antes de mostrar ao paciente):\n\n<<<TRIAGEM>>>\n{\"nome\":\"...\",\"queixa\":\"...\",\"horario_preferido\":\"...\",\"status\":\"completo\"}\n<<<FIM>>>\n\nPreencha o JSON com os dados reais coletados. Não use esse bloco antes da triagem estar completa.\n"
+            },
+            {
+              "type": "text",
+              "role": "user",
+              "content": "={{ $json.userContent }}"
             }
           ]
         },
@@ -38,45 +64,126 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.3,
       "position": [
-        208,
+        520,
         0
       ],
       "id": "cb213871-998c-45d9-94bd-a8de036a28dd",
       "name": "Message a model",
       "credentials": {
         "openAiApi": {
-          "id": "hIYj1rwIPxWhqI4e",
           "name": "OpenAI account"
         }
       }
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
+        "jsCode": "const chatId = String($('Preparar Contexto').item.json.chatId);\nconst userText = String($('Preparar Contexto').item.json.text || '');\nlet raw = String($json.output?.[0]?.content?.[0]?.text || $json.output || '');\n\nconst match = raw.match(/<<<TRIAGEM>>>\\s*([\\s\\S]*?)\\s*<<<FIM>>>/);\nlet lead = null;\nlet reply = raw;\n\nif (match) {\n  reply = raw.replace(match[0], '').trim();\n  try {\n    lead = JSON.parse(match[1].trim());\n  } catch (e) {\n    lead = null;\n  }\n}\n\nconst staticData = $getWorkflowStaticData('global');\nif (!staticData.conversations) staticData.conversations = {};\nif (!staticData.conversations[chatId]) staticData.conversations[chatId] = [];\nstaticData.conversations[chatId].push({ role: 'user', content: userText });\nstaticData.conversations[chatId].push({ role: 'assistant', content: reply });\nif (staticData.conversations[chatId].length > 20) {\n  staticData.conversations[chatId] = staticData.conversations[chatId].slice(-20);\n}\n\nif (lead?.status === 'completo') {\n  staticData.conversations[chatId] = [];\n}\n\nreturn [{\n  json: {\n    chatId,\n    output: reply,\n    leadCompleto: !!(lead && lead.status === 'completo'),\n    nome: lead?.nome || '',\n    queixa: lead?.queixa || '',\n    horario_preferido: lead?.horario_preferido || '',\n    registrado_em: new Date().toISOString(),\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        0
+      ],
+      "id": "c3d4e5f6-7777-8888-9999-aaaa0000bbbb",
+      "name": "Extrair Lead e Memoria"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        -120
+      ],
+      "id": "f3a8c2d1-9b4e-4a7f-8c6d-1e2f3a4b5c6d",
+      "name": "Send Telegram Message",
+      "credentials": {
+        "telegramApi": {
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
             {
-              "id": "0606eece-069a-46dd-aa59-c7d1d137e223",
-              "name": "output",
-              "value": "={{ $json.output[0].content[0].text }}",
-              "type": "string"
+              "value1": "={{ $json.leadCompleto }}",
+              "value2": true
             }
           ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        120
+      ],
+      "id": "d4e5f6a7-1212-3434-5656-787890901212",
+      "name": "Lead Completo?"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "SUBSTITUA_PELO_ID_DA_PLANILHA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "registrado_em": "={{ $json.registrado_em }}",
+            "nome": "={{ $json.nome }}",
+            "queixa": "={{ $json.queixa }}",
+            "horario_preferido": "={{ $json.horario_preferido }}",
+            "chat_id": "={{ $json.chatId }}"
+          }
         },
         "options": {}
       },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
       "position": [
-        560,
-        0
+        1300,
+        120
       ],
-      "id": "7de28c9e-7d99-420e-b756-7cf9dfa4359b",
-      "name": "Edit Fields"
+      "id": "e5f6a7b8-9999-aaaa-bbbb-ccccddddeeee",
+      "name": "Salvar Lead na Planilha",
+      "disabled": true,
+      "notesInFlow": true,
+      "notes": "Ative este no, conecte Google Sheets e troque o ID da planilha. Aba: Leads."
     }
   ],
   "pinData": {},
   "connections": {
-    "When chat message received": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Preparar Contexto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Contexto": {
       "main": [
         [
           {
@@ -91,11 +198,39 @@
       "main": [
         [
           {
-            "node": "Edit Fields",
+            "node": "Extrair Lead e Memoria",
             "type": "main",
             "index": 0
           }
         ]
+      ]
+    },
+    "Extrair Lead e Memoria": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Lead Completo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Completo?": {
+      "main": [
+        [
+          {
+            "node": "Salvar Lead na Planilha",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     }
   },
@@ -105,12 +240,10 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "94464967-e101-4677-888c-c5378b60b6df",
+  "versionId": "876fb195-8530-4e9b-aa29-81af2bf7d502",
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "17b0b5161b41f39568b9123ef43a6bc59e352b1f6e860fec72465be86a8b9d7d"
+    "templateCredsSetupCompleted": false
   },
   "nodeGroups": [],
-  "id": "sRVBDAY0FLspfqCg",
   "tags": []
 }

@@ -1,0 +1,16 @@
+# Local / editor
+.DS_Store
+Thumbs.db
+*.log
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+
+# n8n local dumps with credentials
+**/credentials.json
+**/*secret*
+
+# Build helpers
+_build_workflow.py
