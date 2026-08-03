@@ -1,62 +1,60 @@
-# Assistente de triagem pra clínicas
+# Assistente de Triagem para Clínicas
 
-Montei isso pra mostrar um tipo de automação que faz sentido de verdade: o paciente fala no Telegram, o bot faz a triagem inicial e, no fim, o lead fica organizado pra recepção.
+Prova de conceito de automação de atendimento inicial. O paciente conversa por Telegram, o fluxo conduz a triagem básica com OpenAI e, ao final, organiza os dados para a recepção — com opção de registro em Google Sheets.
 
-Não é sistema hospitalar. É uma PoC de atendimento com n8n + OpenAI + Telegram, com a opção de gravar os dados no Google Sheets.
+O objetivo é demonstrar um caso prático de automação: conversa com regras de negócio claras e saída estruturada, sem pretender ser um sistema clínico completo.
 
-## Em resumo
+## Escopo
 
-O bot pergunta, com calma:
+O assistente coleta:
 
-1. nome
-2. queixa
-3. horário de preferência
+1. Nome do paciente  
+2. Queixa principal  
+3. Preferência de horário  
 
-Quando isso estiver completo, ele resume pra pessoa e monta um lead estruturado. Se você ligar o nó do Sheets, esses dados caem numa planilha.
+Em seguida, confirma o resumo com a pessoa e gera um lead estruturado. Se o nó do Google Sheets estiver ativo, os dados são gravados em planilha.
 
 ## Por que Telegram
 
-Quis evitar a dor de cabeça da API oficial do WhatsApp/Meta. Telegram dá pra testar rápido e já demonstra o fluxo ponta a ponta.
+A integração utiliza Telegram para facilitar testes e demonstração ponta a ponta, evitando a complexidade de configuração da API oficial do WhatsApp/Meta nesta PoC.
 
-## Arquivos
+## Estrutura do repositório
 
-- `workflow-triagem.json` — fluxo do n8n
-- `system-prompt.txt` — regras da “recepcionista” (tom, limites, o que pode e o que não pode)
-- `exemplos/leads-modelo.csv` — modelo das colunas da planilha
-- `preview-*.jpeg` — prints (podem estar um pouco atrás do fluxo atual)
+- `workflow-triagem.json` — fluxo n8n  
+- `system-prompt.txt` — instruções de tom, limites e conduta da recepção  
+- `exemplos/leads-modelo.csv` — modelo de colunas da planilha  
+- `preview-*.jpeg` — capturas de tela (podem corresponder a uma versão anterior do canvas)
 
-## Prints
+## Demonstração
 
 Fluxo no n8n:
 
 ![Fluxo no n8n](preview-arquitetura.jpeg)
 
-Conversa:
+Exemplo de conversa:
 
 ![Exemplo de conversa](preview-chat.jpeg)
 
-## Como rodar
+## Como executar
 
-Sobe o n8n:
+Suba o n8n:
 
 ```bash
 docker run -it --rm --name n8n -p 5678:5678 -v n8n_data:/home/node/.n8n docker.n8n.io/n8nio/n8n
 ```
 
-Abre `http://localhost:5678`, cria as credenciais (OpenAI e Telegram) e importa o `workflow-triagem.json`.
+Acesse `http://localhost:5678`, configure as credenciais de OpenAI e Telegram e importe `workflow-triagem.json`. Ative o workflow e inicie a conversa com o bot.
 
-Depois é só ativar o workflow e mandar mensagem pro bot.
+### Google Sheets (opcional)
 
-### Planilha (opcional)
+1. Crie uma planilha com a aba `Leads`  
+2. Utilize os cabeçalhos de `exemplos/leads-modelo.csv`  
+3. No nó **Salvar Lead na Planilha**, substitua o ID placeholder pelo ID do documento  
+4. Ative o nó (ele permanece desabilitado no export por padrão)
 
-1. Cria uma planilha com a aba `Leads`
-2. Usa os cabeçalhos do `exemplos/leads-modelo.csv`
-3. No nó **Salvar Lead na Planilha**, troca o ID placeholder pelo ID da sua planilha
-4. Ativa o nó (ele vem desligado de propósito)
+## Geração do lead
 
-## Como o lead é gerado
-
-Quando a triagem fecha, o modelo manda um bloco técnico junto da resposta. O fluxo remove isso antes de enviar pro paciente e usa só os dados:
+Ao concluir a triagem, o modelo inclui um bloco técnico na resposta. O fluxo remove esse bloco antes de enviar a mensagem ao paciente e utiliza os campos para registro:
 
 ```text
 <<<TRIAGEM>>>
@@ -64,17 +62,17 @@ Quando a triagem fecha, o modelo manda um bloco técnico junto da resposta. O fl
 <<<FIM>>>
 ```
 
-## Stack
+## Tecnologias
 
-n8n, OpenAI (`gpt-4o-mini`), Telegram, Google Sheets (opcional), Docker.
+n8n, OpenAI (`gpt-4o-mini`), Telegram Bot API, Google Sheets (opcional) e Docker.
 
 ## Limitações
 
-- Não marca consulta de verdade no sistema da clínica
-- A memória da conversa fica no n8n; se reiniciar, pode resetar
-- Não substitui médico nem recepção humana
-- Usei IA no desenvolvimento — o foco é o fluxo e a utilidade, não “parece mágica”
+- Não realiza agendamento efetivo no sistema da clínica  
+- A memória da conversa depende do estado interno do n8n e pode ser reiniciada  
+- Não substitui atendimento médico nem a recepção humana  
+- Ferramentas de IA foram utilizadas no desenvolvimento; o foco do repositório é o fluxo e a aplicabilidade prática
 
 ## Autor
 
-Yuri Carvalhais. Curtindo automação, integração e backend.
+Yuri Carvalhais — desenvolvimento de software, automações e integrações.
