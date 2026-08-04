@@ -1,6 +1,6 @@
 # Assistente de Triagem para Clínicas
 
-Prova de conceito de automação de atendimento inicial. O paciente conversa por Telegram, o fluxo conduz a triagem básica com OpenAI e, ao final, organiza os dados para a recepção — com opção de registro em Google Sheets.
+Prova de conceito de automação de atendimento inicial. O paciente conversa por Telegram, o fluxo conduz a triagem básica com OpenAI e, ao final, registra o lead na planilha da recepção (Google Sheets).
 
 O objetivo é demonstrar um caso prático de automação: conversa com regras de negócio claras e saída estruturada, sem pretender ser um sistema clínico completo.
 
@@ -12,7 +12,11 @@ O assistente coleta:
 2. Queixa principal  
 3. Preferência de horário  
 
-Em seguida, confirma o resumo com a pessoa e gera um lead estruturado. Se o nó do Google Sheets estiver ativo, os dados são gravados em planilha.
+Em seguida, confirma o resumo com a pessoa e gera um lead estruturado. Com o nó do Google Sheets ativo, os dados são gravados automaticamente na planilha.
+
+## Demonstração em vídeo
+
+[Assistir à demonstração (Google Drive)](https://drive.google.com/file/d/11BnvpNhbchRRga6ZAnkTlYF0Zn1F9LJo/view?usp=sharing)
 
 ## Por que Telegram
 
@@ -23,9 +27,11 @@ A integração utiliza Telegram para facilitar testes e demonstração ponta a p
 - `workflow-triagem.json` — fluxo n8n  
 - `system-prompt.txt` — instruções de tom, limites e conduta da recepção  
 - `exemplos/leads-modelo.csv` — modelo de colunas da planilha  
-- `preview-*.jpeg` — capturas de tela (podem corresponder a uma versão anterior do canvas)
+- `preview-arquitetura.jpeg` — canvas do fluxo  
+- `preview-chat.jpeg` — conversa de exemplo  
+- `preview-planilha.jpeg` — lead registrado no Sheets  
 
-## Demonstração
+## Capturas
 
 Fluxo no n8n:
 
@@ -35,6 +41,10 @@ Exemplo de conversa:
 
 ![Exemplo de conversa](preview-chat.jpeg)
 
+Lead na planilha:
+
+![Lead na planilha](preview-planilha.jpeg)
+
 ## Como executar
 
 Suba o n8n:
@@ -43,14 +53,16 @@ Suba o n8n:
 docker run -it --rm --name n8n -p 5678:5678 -v n8n_data:/home/node/.n8n docker.n8n.io/n8nio/n8n
 ```
 
-Acesse `http://localhost:5678`, configure as credenciais de OpenAI e Telegram e importe `workflow-triagem.json`. Ative o workflow e inicie a conversa com o bot.
+Acesse `http://localhost:5678`, configure as credenciais de OpenAI e Telegram e importe `workflow-triagem.json`.
 
-### Google Sheets (opcional)
+Para o Telegram Trigger em ambiente local, é necessário expor o n8n com HTTPS (por exemplo, túnel Cloudflare/ngrok) e definir `WEBHOOK_URL` com a URL pública. Em seguida, ative o workflow e inicie a conversa com o bot.
+
+### Google Sheets (recomendado na demo)
 
 1. Crie uma planilha com a aba `Leads`  
 2. Utilize os cabeçalhos de `exemplos/leads-modelo.csv`  
-3. No nó **Salvar Lead na Planilha**, substitua o ID placeholder pelo ID do documento  
-4. Ative o nó (ele permanece desabilitado no export por padrão)
+3. Configure a credencial Google (OAuth — cliente do tipo **Aplicativo da Web**)  
+4. No nó **Salvar Lead na Planilha**, substitua o ID placeholder pelo ID do documento e ative o nó (ele vem desabilitado no export)  
 
 ## Geração do lead
 
@@ -64,14 +76,14 @@ Ao concluir a triagem, o modelo inclui um bloco técnico na resposta. O fluxo re
 
 ## Tecnologias
 
-n8n, OpenAI (`gpt-4o-mini`), Telegram Bot API, Google Sheets (opcional) e Docker.
+n8n, OpenAI (`gpt-4o-mini`), Telegram Bot API, Google Sheets e Docker.
 
 ## Limitações
 
 - Não realiza agendamento efetivo no sistema da clínica  
 - A memória da conversa depende do estado interno do n8n e pode ser reiniciada  
 - Não substitui atendimento médico nem a recepção humana  
-- Ferramentas de IA foram utilizadas no desenvolvimento; o foco do repositório é o fluxo e a aplicabilidade prática
+- Ferramentas de IA foram utilizadas no desenvolvimento; o foco do repositório é o fluxo e a aplicabilidade prática  
 
 ## Autor
 
